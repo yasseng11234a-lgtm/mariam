@@ -1,54 +1,54 @@
-<!doctype html>
-<html lang="ar" dir="rtl" data-theme="light">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Velvet | مكتبة</title><link rel="icon" href="./logo.svg">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
-<link rel="stylesheet" href="./style.css">
-</head>
-<body>
-<svg width="0" height="0" style="position:absolute"><symbol id="fl" viewBox="0 0 40 40"><g fill="#9b7de0" fill-opacity=".9"><ellipse cx="20" cy="9" rx="6" ry="9"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(72 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(144 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(216 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="4.5" fill="#ffd86b"/></symbol></svg>
-<div id="loader">
-  <div class="fl l"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div><div class="fl r"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div>
-  <h1 id="welcome">أهلاً بك في موقعنا</h1>
-</div>
-<div id="petals"></div>
-<header>
-  <button id="menuBtn" title="القائمة">☰</button><a class="logo" href="#top"><svg class="fw"><use href="#fl"/></svg><span>Velvet</span><small>مكتبة</small></a>
-    <div class="tools">
-    <button id="themeBtn" title="الوضع">🌙</button>
-    <button id="wishBtn" title="المفضلة">★<sup id="wishN">0</sup></button>
-    <button id="cartBtn" title="السلة">🛒<sup id="cartN">0</sup></button>
-    <button id="adminBtn" data-act="opendash" hidden>⚙ لوحة المالك</button><button id="authBtn" class="pri">دخول</button>
-  </div>
-</header>
-<div id="sideBg" data-act="closeside"></div>
-<aside id="side"><h3>القائمة</h3>
-<button data-act="nav" data-id="#new">✨ أُضيف حديثاً</button>
-<button data-act="nav" data-id="#books">📚 الكتب</button>
-<button data-act="togcats">🏷 التصنيفات ▾</button><div id="sideCats" hidden></div>
-<button data-act="nav" data-id="#vreviews">💬 الريفيوهات</button>
-<button id="adminLink" data-act="opendash" hidden>⚙ لوحة المالك</button></aside>
-<div class="hero" id="top"><svg class="fw big"><use href="#fl"/></svg><h1>Velvet</h1><p>كتب تستحق القراءة، بلمسة لافندر هادئة</p><a class="btn" href="#books">تصفّح الكتب</a></div>
-<div class="perks"><div>🚚<b>توصيل لحد بيتك</b><small>سجّلي موقعك على الخريطة</small></div><div>💵<b>دفع مرن</b><small>عند الاستلام أو تحويل</small></div><div>📖<b>معاينة الكتاب</b><small>قبل الاستلام</small></div><div>💜<b>كتب مختارة</b><small>بعناية</small></div></div>
-<main>
-  <section id="new"><h2>أُضيف حديثاً</h2><div class="grid" id="newGrid"></div></section>
-  <section id="books"><h2>الكتب</h2><input id="q" class="search" placeholder="🔍 ابحثي عن كتاب بالاسم..."><div id="chips" class="chips"></div><div class="grid" id="grid"></div></section>
-  <section id="vreviews"><h2>ريفيوهات Velvet</h2><div id="siteRev"></div></section>
-  <section id="admin" hidden></section>
-</main>
-<footer><svg class="fw"><use href="#fl"/></svg><div id="links"></div><small>© Velvet</small></footer>
-<dialog id="dlg"><button class="x" onclick="dlg.close()">✕</button><div id="dlgBody"></div></dialog>
-<div id="dash" hidden></div>
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-// شاشة الافتتاح مستقلة عن باقي الكود، فمهما حصل خطأ الموقع مش هيفضل عالق عليها
-setTimeout(function(){document.getElementById('welcome').classList.add('in')},1700);
-setTimeout(function(){var w=document.getElementById('welcome');w.classList.remove('in');w.classList.add('out');document.getElementById('loader').classList.add('gone')},4300);
-addEventListener('error',function(e){var d=document.createElement('div');d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#c2528c;color:#fff;padding:.6rem;z-index:999;direction:ltr;font:13px monospace';d.textContent='Error: '+(e.message||'failed to load '+((e.target&&(e.target.src||e.target.href))||''));document.body.appendChild(d)},true);
-</script>
-<script src="./config.js"></script>
-<script type="module" src="./app.js"></script>
-</body>
-</html>
+// Supabase Edge Function: يبعت إيميل لصاحبة المتجر عند كل أوردر جديد عبر Gmail (SMTP)
+// الإعدادات (حساب Gmail + كلمة مرور التطبيق + إيميل الاستلام) بتتحفظ من لوحة المالك داخل الموقع
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+
+const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
+const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+const PAY: Record<string, string> = { cod: 'الدفع عند الاستلام', visa: 'فيزا عند الاستلام', instapay: 'تحويل InstaPay', vodafone: 'تحويل فودافون كاش' };
+const reply = (t: string, status = 200) => new Response(t, { status, headers: cors });
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') return reply('ok');
+  try {
+    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
+    const token = (req.headers.get('Authorization') || '').replace('Bearer ', '');
+    const { data: u } = await sb.auth.getUser(token);
+    if (!u?.user) return reply('unauthorized', 401);
+    const body = await req.json().catch(() => ({}));
+
+    const { data: m } = await sb.from('mail_settings').select('*').eq('id', 1).maybeSingle();
+    if (!m?.gmail_user || !m?.gmail_app_password) return reply('لم يتم ضبط إعدادات الإيميل في لوحة المالك ← الإعدادات', 400);
+    const to = m.notify_to || m.gmail_user;
+    const send = async (subject: string, html: string) => {
+      const c = new SMTPClient({ connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: m.gmail_user, password: m.gmail_app_password } } });
+      await c.send({ from: m.gmail_user, to, subject, html });
+      await c.close();
+    };
+
+    // إيميل تجريبي (للأدمن فقط)
+    if (body.test) {
+      const { data: a } = await sb.from('admins').select('email').eq('email', u.user.email).maybeSingle();
+      if (!a) return reply('forbidden', 403);
+      await send('✅ إيميل تجريبي من Velvet', '<p dir="rtl">إعدادات الإيميل شغالة، وهتوصلك إشعارات الأوردرات هنا.</p>');
+      return reply('sent');
+    }
+
+    const { data: o } = await sb.from('orders').select('*, order_items(qty, unit_price, books(title))').eq('id', body.order_id).single();
+    // يرسل فقط لصاحب الأوردر نفسه ومرة واحدة
+    if (!o || o.user_id !== u.user.id || o.notified) return reply('skip');
+
+    const items = (o.order_items as any[]).map((i) => `<li>${esc(i.books?.title)} × ${i.qty} — ${i.unit_price} ج</li>`).join('');
+    const map = o.lat ? `https://www.google.com/maps?q=${o.lat},${o.lng}` : '';
+    await send(`🛍 أوردر جديد — ${o.total} ج`, `<div dir="rtl" style="font-family:Tahoma,Arial;line-height:1.8">
+      <h2>🛍 أوردر جديد على Velvet</h2><ul>${items}</ul>
+      <p><b>الإجمالي:</b> ${o.total} ج<br><b>طريقة الدفع:</b> ${PAY[o.payment_method] ?? '-'}</p>
+      <p><b>الاسم:</b> ${esc(o.customer_name)}<br><b>التليفون:</b> ${esc(o.phone)}${o.phone2 ? ' / ' + esc(o.phone2) : ''}<br>
+      <b>العنوان:</b> ${esc(o.street)} - ${esc(o.place)}<br>${map ? `<a href="${map}">📍 الموقع على الخريطة</a>` : ''}</p>
+      <p>العميل هيكلمك على واتساب لتأكيد الأوردر.</p></div>`);
+    await sb.from('orders').update({ notified: true }).eq('id', o.id);
+    return reply('sent');
+  } catch (e) {
+    return reply(String(e), 500);
+  }
+});
