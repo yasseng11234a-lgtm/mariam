@@ -1,54 +1,100 @@
-// Supabase Edge Function: يبعت إيميل لصاحبة المتجر عند كل أوردر جديد عبر Gmail (SMTP)
-// الإعدادات (حساب Gmail + كلمة مرور التطبيق + إيميل الاستلام) بتتحفظ من لوحة المالك داخل الموقع
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { SMTPClient } from 'https://deno.land/x/denomailer@1.6.0/mod.ts';
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Velvet — مكتبة كتب</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="fl" viewBox="0 0 100 100"><g fill="#c9b3f8" stroke="#9b7de0" stroke-width="2">
+    <ellipse cx="50" cy="22" rx="12" ry="22"/><ellipse cx="50" cy="22" rx="12" ry="22" transform="rotate(72 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="22" transform="rotate(144 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="22" transform="rotate(216 50 50)"/><ellipse cx="50" cy="22" rx="12" ry="22" transform="rotate(288 50 50)"/></g><circle cx="50" cy="50" r="8" fill="#f2b01e"/></symbol>
+</svg>
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' };
-const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-const PAY: Record<string, string> = { cod: 'الدفع عند الاستلام', visa: 'فيزا عند الاستلام', instapay: 'تحويل InstaPay', vodafone: 'تحويل فودافون كاش' };
-const reply = (t: string, status = 200) => new Response(t, { status, headers: cors });
+<div id="loader">
+  <div class="fl l"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div>
+  <div id="welcome">أهلاً بكِ في Velvet 🌸</div>
+  <div class="fl r"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div>
+</div>
+<div id="petals"></div>
 
-Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return reply('ok');
-  try {
-    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
-    const token = (req.headers.get('Authorization') || '').replace('Bearer ', '');
-    const { data: u } = await sb.auth.getUser(token);
-    if (!u?.user) return reply('unauthorized', 401);
-    const body = await req.json().catch(() => ({}));
+<header>
+  <button id="menuBtn" aria-label="القائمة">☰</button>
+  <a class="logo" href="#"><svg class="fw"><use href="#fl"/></svg><span>Velvet</span><small>مكتبة</small></a>
+  <nav>
+    <a href="#" data-act="nav" data-id="#top">الرئيسية</a>
+    <a href="#" data-act="nav" data-id="#new">جديدنا</a>
+    <a href="#" data-act="nav" data-id="#books">الكتب</a>
+    <a href="#" data-act="nav" data-id="#reviews">آراء العملاء</a>
+    <a href="#" id="adminLink" data-act="opendash" hidden>لوحة المالك</a>
+  </nav>
+  <div class="tools">
+    <button id="themeBtn">🌙</button>
+    <button id="wishBtn">★<sup id="wishN">0</sup></button>
+    <button id="cartBtn">🛒<sup id="cartN">0</sup></button>
+    <button id="authBtn">دخول</button>
+  </div>
+</header>
 
-    const { data: m } = await sb.from('mail_settings').select('*').eq('id', 1).maybeSingle();
-    if (!m?.gmail_user || !m?.gmail_app_password) return reply('لم يتم ضبط إعدادات الإيميل في لوحة المالك ← الإعدادات', 400);
-    const to = m.notify_to || m.gmail_user;
-    const send = async (subject: string, html: string) => {
-      const c = new SMTPClient({ connection: { hostname: 'smtp.gmail.com', port: 465, tls: true, auth: { username: m.gmail_user, password: m.gmail_app_password } } });
-      await c.send({ from: m.gmail_user, to, subject, html });
-      await c.close();
-    };
+<div id="sideBg" data-act="closeside"></div>
+<aside id="side">
+  <button data-act="closeside">✕ إغلاق</button>
+  <button data-act="nav" data-id="#top">🏠 الرئيسية</button>
+  <button data-act="nav" data-id="#new">✨ جديدنا</button>
+  <button data-act="togcats">📚 الأقسام</button>
+  <div id="sideCats" hidden></div>
+  <button data-act="nav" data-id="#reviews">💬 آراء العملاء</button>
+  <button id="adminBtn" data-act="opendash" hidden>⚙️ لوحة المالك</button>
+</aside>
 
-    // إيميل تجريبي (للأدمن فقط)
-    if (body.test) {
-      const { data: a } = await sb.from('admins').select('email').eq('email', u.user.email).maybeSingle();
-      if (!a) return reply('forbidden', 403);
-      await send('✅ إيميل تجريبي من Velvet', '<p dir="rtl">إعدادات الإيميل شغالة، وهتوصلك إشعارات الأوردرات هنا.</p>');
-      return reply('sent');
-    }
+<div id="top" class="hero">
+  <svg class="fw big"><use href="#fl"/></svg>
+  <h1>Velvet</h1>
+  <p>كتب تستحق القراءة، بتوصلك لحد باب البيت</p>
+  <a class="btn" href="#" data-act="nav" data-id="#books">تصفّحي الكتب</a>
+</div>
 
-    const { data: o } = await sb.from('orders').select('*, order_items(qty, unit_price, books(title))').eq('id', body.order_id).single();
-    // يرسل فقط لصاحب الأوردر نفسه ومرة واحدة
-    if (!o || o.user_id !== u.user.id || o.notified) return reply('skip');
+<div class="perks">
+  <div>🚚<b>توصيل لحد البيت</b><small>لكل المحافظات</small></div>
+  <div>💵<b>الدفع عند الاستلام</b><small>للأوردرات الصغيرة</small></div>
+  <div>🔍<b>افحصي كتابك</b><small>قبل ما تستلميه</small></div>
+</div>
 
-    const items = (o.order_items as any[]).map((i) => `<li>${esc(i.books?.title)} × ${i.qty} — ${i.unit_price} ج</li>`).join('');
-    const map = o.lat ? `https://www.google.com/maps?q=${o.lat},${o.lng}` : '';
-    await send(`🛍 أوردر جديد — ${o.total} ج`, `<div dir="rtl" style="font-family:Tahoma,Arial;line-height:1.8">
-      <h2>🛍 أوردر جديد على Velvet</h2><ul>${items}</ul>
-      <p><b>الإجمالي:</b> ${o.total} ج<br><b>طريقة الدفع:</b> ${PAY[o.payment_method] ?? '-'}</p>
-      <p><b>الاسم:</b> ${esc(o.customer_name)}<br><b>التليفون:</b> ${esc(o.phone)}${o.phone2 ? ' / ' + esc(o.phone2) : ''}<br>
-      <b>العنوان:</b> ${esc(o.street)} - ${esc(o.place)}<br>${map ? `<a href="${map}">📍 الموقع على الخريطة</a>` : ''}</p>
-      <p>العميل هيكلمك على واتساب لتأكيد الأوردر.</p></div>`);
-    await sb.from('orders').update({ notified: true }).eq('id', o.id);
-    return reply('sent');
-  } catch (e) {
-    return reply(String(e), 500);
-  }
-});
+<main>
+  <section id="new"><h2>✨ جديدنا هذا الأسبوع</h2><div class="grid" id="newGrid"></div></section>
+  <section id="books">
+    <h2>📚 الكتب</h2>
+    <input id="q" class="search" type="search" placeholder="ابحثي عن كتاب...">
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+  </section>
+  <section id="reviews"><h2>💬 آراء العملاء</h2><div id="siteRev"></div></section>
+</main>
+
+<footer><div id="links"></div><p>© Velvet — كل الحقوق محفوظة</p></footer>
+
+<dialog id="dlg">
+  <form method="dialog"><button class="x" aria-label="إغلاق">✕</button></form>
+  <div id="dlgBody"></div>
+</dialog>
+
+<div id="dash" hidden></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="config.js"></script>
+<script>
+  // مقدمة الترحيب
+  (function () {
+    var w = document.getElementById('welcome'), l = document.getElementById('loader');
+    setTimeout(function () { w.classList.add('in'); }, 700);
+    setTimeout(function () { w.classList.remove('in'); w.classList.add('out'); }, 2600);
+    setTimeout(function () { l.classList.add('gone'); }, 3200);
+  })();
+</script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
