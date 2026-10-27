@@ -42,6 +42,12 @@
 <dialog id="dlg"><button class="x" onclick="dlg.close()">✕</button><div id="dlgBody"></div></dialog>
 <div id="dash" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// شاشة الافتتاح مستقلة عن باقي الكود، فمهما حصل خطأ الموقع مش هيفضل عالق عليها
+setTimeout(function(){document.getElementById('welcome').classList.add('in')},1700);
+setTimeout(function(){var w=document.getElementById('welcome');w.classList.remove('in');w.classList.add('out');document.getElementById('loader').classList.add('gone')},4300);
+addEventListener('error',function(e){var d=document.createElement('div');d.style.cssText='position:fixed;bottom:0;left:0;right:0;background:#c2528c;color:#fff;padding:.6rem;z-index:999;direction:ltr;font:13px monospace';d.textContent='Error: '+(e.message||'failed to load '+((e.target&&(e.target.src||e.target.href))||''));document.body.appendChild(d)},true);
+</script>
 <script src="./config.js"></script>
 <script type="module" src="./app.js"></script>
 </body>

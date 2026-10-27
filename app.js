@@ -1,6 +1,7 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/+esm';
-const env = window.ENV ?? import.meta.env;
-const sb = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_ANON_KEY);
+const env = window.ENV ?? import.meta.env ?? {};
+if (!env.VITE_SUPABASE_URL || env.VITE_SUPABASE_URL.includes('YOUR-PROJECT')) console.error('config.js غير موجود أو غير مضبوط');
+const sb = createClient(env.VITE_SUPABASE_URL || 'https://missing.supabase.co', env.VITE_SUPABASE_ANON_KEY || 'missing');
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = n => Number(n).toLocaleString('ar-EG') + ' ج';
@@ -12,8 +13,6 @@ const dlg = $('#dlg'), show = h => { $('#dlgBody').innerHTML = h; if (!dlg.open)
 
 /* ---------- Intro + theme + petals ---------- */
 const w = $('#welcome');
-setTimeout(() => w.classList.add('in'), 1700);
-setTimeout(() => { w.classList.replace('in', 'out'); $('#loader').classList.add('gone'); }, 4300);
 for (let i = 0; i < 14; i++) { const s = document.createElement('span'); s.innerHTML = '<svg><use href="#fl"/></svg>'; s.style.cssText = `left:${Math.random() * 100}%;width:${16 + Math.random() * 16}px;animation-duration:${10 + Math.random() * 12}s;animation-delay:${-Math.random() * 15}s`; $('#petals').append(s); }
 const setTheme = t => { document.documentElement.dataset.theme = t; localStorage.theme = t; $('#themeBtn').textContent = t === 'dark' ? '☀️' : '🌙'; };
 setTheme(localStorage.theme || 'light');
