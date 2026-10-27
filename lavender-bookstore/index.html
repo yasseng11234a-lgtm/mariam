@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Velvet | مكتبة</title><link rel="icon" href="./logo.svg">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><symbol id="fl" viewBox="0 0 40 40"><g fill="#9b7de0" fill-opacity=".9"><ellipse cx="20" cy="9" rx="6" ry="9"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(72 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(144 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(216 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="9" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="4.5" fill="#ffd86b"/></symbol></svg>
+<div id="loader">
+  <div class="fl l"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div><div class="fl r"><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg><svg><use href="#fl"/></svg></div>
+  <h1 id="welcome">أهلاً بك في موقعنا</h1>
+</div>
+<div id="petals"></div>
+<header>
+  <button id="menuBtn" title="القائمة">☰</button><a class="logo" href="#top"><svg class="fw"><use href="#fl"/></svg><span>Velvet</span><small>مكتبة</small></a>
+    <div class="tools">
+    <button id="themeBtn" title="الوضع">🌙</button>
+    <button id="wishBtn" title="المفضلة">★<sup id="wishN">0</sup></button>
+    <button id="cartBtn" title="السلة">🛒<sup id="cartN">0</sup></button>
+    <button id="adminBtn" data-act="opendash" hidden>⚙ لوحة المالك</button><button id="authBtn" class="pri">دخول</button>
+  </div>
+</header>
+<div id="sideBg" data-act="closeside"></div>
+<aside id="side"><h3>القائمة</h3>
+<button data-act="nav" data-id="#new">✨ أُضيف حديثاً</button>
+<button data-act="nav" data-id="#books">📚 الكتب</button>
+<button data-act="togcats">🏷 التصنيفات ▾</button><div id="sideCats" hidden></div>
+<button data-act="nav" data-id="#vreviews">💬 الريفيوهات</button>
+<button id="adminLink" data-act="opendash" hidden>⚙ لوحة المالك</button></aside>
+<div class="hero" id="top"><svg class="fw big"><use href="#fl"/></svg><h1>Velvet</h1><p>كتب تستحق القراءة، بلمسة لافندر هادئة</p><a class="btn" href="#books">تصفّح الكتب</a></div>
+<div class="perks"><div>🚚<b>توصيل لحد بيتك</b><small>سجّلي موقعك على الخريطة</small></div><div>💵<b>دفع مرن</b><small>عند الاستلام أو تحويل</small></div><div>📖<b>معاينة الكتاب</b><small>قبل الاستلام</small></div><div>💜<b>كتب مختارة</b><small>بعناية</small></div></div>
+<main>
+  <section id="new"><h2>أُضيف حديثاً</h2><div class="grid" id="newGrid"></div></section>
+  <section id="books"><h2>الكتب</h2><input id="q" class="search" placeholder="🔍 ابحثي عن كتاب بالاسم..."><div id="chips" class="chips"></div><div class="grid" id="grid"></div></section>
+  <section id="vreviews"><h2>ريفيوهات Velvet</h2><div id="siteRev"></div></section>
+  <section id="admin" hidden></section>
+</main>
+<footer><svg class="fw"><use href="#fl"/></svg><div id="links"></div><small>© Velvet</small></footer>
+<dialog id="dlg"><button class="x" onclick="dlg.close()">✕</button><div id="dlgBody"></div></dialog>
+<div id="dash" hidden></div>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="./config.js"></script>
+<script type="module" src="./app.js"></script>
+</body>
+</html>
