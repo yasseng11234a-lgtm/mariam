@@ -73,8 +73,16 @@ function authDlg(m = 'login') {
   show(`<div class="auth"><svg class="fw big"><use href="#fl"/></svg><h3>${up ? 'إنشاء حساب جديد' : 'تسجيل الدخول'}</h3>
   ${up ? '<input id="nm" placeholder="الاسم">' : ''}<input id="em" type="email" placeholder="البريد الإلكتروني"><input id="pw" type="password" placeholder="كلمة المرور (6 أحرف على الأقل)">
   <p id="aerr" class="err"></p><button class="wide" data-act="${up ? 'signup' : 'login'}">${up ? 'إنشاء الحساب' : 'دخول'}</button>
+  <p style="margin:.6rem 0">— أو —</p><button class="wide" data-act="google">🔵 الدخول بحساب جوجل</button><button class="wide" data-act="otpform">✉️ الدخول بكود على الإيميل</button>
   ${up ? '' : '<p><a href="#" data-act="reset">نسيت كلمة المرور؟</a></p>'}
   <p>${up ? 'عندك حساب؟ <a href="#" data-act="tologin">سجّل دخول</a>' : 'جديد هنا؟ <a href="#" data-act="tosignup">أنشئ حساب</a>'}</p></div>`);
+}
+
+function otpDlg(email = '') {
+  show(`<div class="auth"><svg class="fw big"><use href="#fl"/></svg><h3>الدخول بكود على الإيميل</h3>
+  ${email ? `<p class="note">بعتنا كود على <b dir="ltr">${esc(email)}</b>. اكتبيه هنا (شوفي الـ Spam لو مجاش).</p><input id="otpem" type="hidden" value="${esc(email)}"><input id="otp" inputmode="numeric" autocomplete="one-time-code" placeholder="الكود" dir="ltr" style="text-align:center;letter-spacing:.4rem"><p id="aerr" class="err"></p><button class="wide" data-act="verifyotp">تأكيد الكود</button><p><a href="#" data-act="sendotp">إعادة إرسال الكود</a></p>`
+  : `<input id="em" type="email" placeholder="البريد الإلكتروني" dir="ltr"><p id="aerr" class="err"></p><button class="wide" data-act="sendotp">إرسال الكود</button>`}
+  <p><a href="#" data-act="tologin">رجوع</a></p></div>`);
 }
 let map, pin;
 const waNum = () => String(settings.whatsapp || env.VITE_WHATSAPP_NUMBER || '').replace(/\D/g, '');
@@ -192,6 +200,10 @@ document.addEventListener('click', async ev => {
   else if (act === 'togcats') $('#sideCats').hidden = !$('#sideCats').hidden;
   else if (act === 'nav') { closeSide(); if (id === '#books') { filter = 'all'; render(); } document.querySelector(id).scrollIntoView({ behavior: 'smooth' }); }
   else if (act === 'sfilter') { filter = id; render(); closeSide(); $('#books').scrollIntoView({ behavior: 'smooth' }); }
+  else if (act === 'google') { const { error } = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } }); if (error) $('#aerr').textContent = error.message; }
+  else if (act === 'otpform') otpDlg();
+  else if (act === 'sendotp') { const em = ($('#otpem')?.value || $('#em')?.value || '').trim(); if (!em) return $('#aerr').textContent = 'اكتبي الإيميل.'; const { error } = await sb.auth.signInWithOtp({ email: em, options: { shouldCreateUser: true } }); if (error) return $('#aerr').textContent = /rate|seconds|limit/i.test(error.message) ? 'استني دقيقة وجرّبي تاني.' : error.message; otpDlg(em); }
+  else if (act === 'verifyotp') { const { error } = await sb.auth.verifyOtp({ email: $('#otpem').value, token: $('#otp').value.trim(), type: 'email' }); if (error) return $('#aerr').textContent = 'الكود غير صحيح أو انتهت صلاحيته.'; dlg.close(); load(); }
   else if (act === 'tologin') authDlg('login'); else if (act === 'tosignup') authDlg('signup');
   else if (act === 'reset') { const { error } = await sb.auth.resetPasswordForEmail($('#em').value); $('#aerr').textContent = error ? error.message : 'تم إرسال رابط استعادة كلمة المرور لبريدك.'; }
   else if (act === 'login' || act === 'signup') { const c = { email: $('#em').value, password: $('#pw').value }; const r = act === 'login' ? await sb.auth.signInWithPassword(c) : await sb.auth.signUp({ ...c, options: { data: { full_name: $('#nm').value } } }); if (r.error) return $('#aerr').textContent = r.error.message; if (!r.data.session) { $('#dlgBody').innerHTML = '<p class="note">تم إنشاء الحساب. افتح بريدك لتأكيد الإيميل ثم سجّل الدخول.</p>'; return; } dlg.close(); load(); }
